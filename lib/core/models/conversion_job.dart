@@ -42,23 +42,23 @@ class ConversionJob {
     );
   }
 
-  List<String> get availableFormats {
-    switch (extension.toLowerCase()) {
-      case 'jpg':
-      case 'jpeg': return ['PNG', 'WEBP', 'BMP', 'PDF'];
-      case 'png': return ['JPG', 'WEBP', 'BMP', 'PDF'];
-      case 'webp': return ['JPG', 'PNG', 'BMP'];
-      case 'bmp': return ['JPG', 'PNG', 'WEBP'];
-      case 'pdf': return ['DOCX', 'PNG', 'JPG'];
-      case 'docx': case 'doc': return ['PDF'];
-      case 'txt': return ['PDF'];
-      case 'csv': return ['XLSX'];
-      case 'xlsx': return ['CSV'];
-      case 'mp4': return ['AVI', 'MKV', 'GIF'];
-      case 'avi': return ['MP4', 'MKV', 'GIF'];
-      case 'mkv': return ['MP4', 'AVI', 'GIF'];
-      case 'mov': return ['MP4', 'AVI', 'MKV', 'GIF'];
-      default: return [];
-    }
+List<String> get availableFormats {
+  switch (extension.toLowerCase()) {
+    case 'jpg':
+    case 'jpeg': return ['PNG', 'WEBP', 'BMP', 'PDF'];
+    case 'png': return ['JPG', 'WEBP', 'BMP', 'PDF'];
+    case 'webp': return ['JPG', 'PNG', 'BMP'];
+    case 'bmp': return ['JPG', 'PNG', 'WEBP'];
+    case 'pdf': return ['DOCX', 'PNG', 'JPG'];
+    case 'docx': case 'doc': return ['PDF'];
+    case 'txt': return ['PDF'];
+    case 'csv': return ['XLSX'];
+    case 'xlsx': return ['CSV'];
+    case 'mp4': return ['AVI', 'MKV', 'GIF'];
+    case 'avi': return ['MP4', 'MKV', 'GIF'];
+    case 'mkv': return ['MP4', 'AVI', 'GIF'];
+    case 'mov': return ['MP4', 'AVI', 'MKV', 'GIF'];
+    default: return [];
   }
+}
 }

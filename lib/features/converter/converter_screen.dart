@@ -70,13 +70,45 @@ class _ConverterScreenState extends State<ConverterScreen> {
         });
         await Future.delayed(const Duration(milliseconds: 100));
       } catch (e) {
-        print('Conversion error: $e');
-        setState(() => _queue[i] = _queue[i].copyWith(status: JobStatus.failed));
-      }
+  print('Conversion error: $e');
+  setState(() => _queue[i] = _queue[i].copyWith(status: JobStatus.failed));
+  if (e.toString().contains('engine')) {
+    _showEngineError(e.toString().replaceAll('Exception: ', ''));
+  }
+}
     }
     setState(() => _converting = false);
   }
-
+void _showEngineError(String message) {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkBgSecondary
+          : AppColors.lightBg,
+      title: Text('Engine limitation',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkText
+                : AppColors.lightText,
+          )),
+      content: Text(message,
+          style: AppTypography.body.copyWith(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
+          )),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('OK', style: TextStyle(color: AppColors.teal)),
+        ),
+      ],
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
