@@ -1,6 +1,6 @@
 {
-    "name": "file_converter",
-    "short_name": "file_converter",
+    "name": "Transmute",
+    "short_name": "Transmute",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

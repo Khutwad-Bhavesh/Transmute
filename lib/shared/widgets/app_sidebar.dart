@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 
-enum SidebarItem { converter, batch, pdfMerge, pdfSplit, history, settings }
-
+enum SidebarItem { converter, batch, pdfMerge, pdfSplit, history, settings, compression }
 class AppSidebar extends StatelessWidget {
   final SidebarItem selected;
   final ValueChanged<SidebarItem> onSelect;
@@ -39,6 +38,7 @@ class AppSidebar extends StatelessWidget {
           _section(context, 'OTHER'),
           _item(context, SidebarItem.history, 'History'),
           _item(context, SidebarItem.settings, 'Settings'),
+          _item(context, SidebarItem.compression, 'Compression'),
         ],
       ),
     );

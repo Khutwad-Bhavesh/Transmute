@@ -9,6 +9,7 @@ import 'features/onboarding/onboarding_screen.dart';
 import 'features/pdf_tools/pdf_tools_screen.dart';
 import 'features/history/history_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/compression/compression_screen.dart';
 
 class FileConverterApp extends StatelessWidget {
   const FileConverterApp({super.key});
@@ -82,6 +83,7 @@ class _MainShellState extends State<MainShell> {
       SidebarItem.pdfSplit => const PdfToolsScreen(),
       SidebarItem.history => const HistoryScreen(),
       SidebarItem.settings => const SettingsScreen(),
+      SidebarItem.compression => const CompressionScreen(),
     };
   }
 

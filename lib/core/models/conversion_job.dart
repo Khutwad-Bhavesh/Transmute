@@ -58,6 +58,18 @@ List<String> get availableFormats {
     case 'avi': return ['MP4', 'MKV', 'GIF'];
     case 'mkv': return ['MP4', 'AVI', 'GIF'];
     case 'mov': return ['MP4', 'AVI', 'MKV', 'GIF'];
+    case 'svg': return ['PNG', 'JPG', 'PDF'];
+    case 'epub': return ['PDF'];
+    case 'mp3': return ['WAV', 'OGG'];
+    case 'wav': return ['MP3', 'OGG'];
+    case 'ogg': return ['MP3', 'WAV'];
+    case 'webm': return ['MP4', 'GIF', 'AVI', 'MKV'];
+    case 'pptx':
+    case 'ppt': return ['PDF'];
+    case 'html':
+    case 'htm': return ['PDF'];
+    case 'md':
+    case 'markdown': return ['PDF'];
     default: return [];
   }
 }

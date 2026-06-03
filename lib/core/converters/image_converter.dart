@@ -33,4 +33,44 @@ class ImageConverter {
     await File(outPath).writeAsBytes(encoded);
     return outPath;
   }
+
+  static Future<String> heicToImage({
+    required String sourcePath,
+    required String targetFormat,
+    required String outputDir,
+  }) async {
+    final baseName = p.basenameWithoutExtension(sourcePath);
+    final outPath = p.join(outputDir, '$baseName.${targetFormat.toLowerCase()}');
+
+    final result = await Process.run('heif-convert', [
+      sourcePath,
+      outPath,
+    ]);
+
+    if (result.exitCode != 0) {
+      throw Exception('heif-convert error: ${result.stderr}');
+    }
+
+    return outPath;
+  }
+static Future<String> svgToImage({
+  required String sourcePath,
+  required String targetFormat,
+  required String outputDir,
+}) async {
+  final baseName = p.basenameWithoutExtension(sourcePath);
+  final outPath = p.join(outputDir, '$baseName.${targetFormat.toLowerCase()}');
+
+  final result = await Process.run('rsvg-convert', [
+    '-f', targetFormat.toLowerCase(),
+    '-o', outPath,
+    sourcePath,
+  ]);
+
+  if (result.exitCode != 0) {
+    throw Exception('rsvg-convert error: ${result.stderr}');
+  }
+
+  return outPath;
+}
 }

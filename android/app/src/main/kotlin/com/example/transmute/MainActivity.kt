@@ -1,4 +1,4 @@
-package com.example.file_converter
+package com.example.transmute
 
 import io.flutter.embedding.android.FlutterActivity
 
