@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:transmute/core/services/output_service.dart';
 import 'package:transmute/core/services/history_service.dart';
 import 'package:transmute/core/engine/engine_config.dart';
@@ -6,8 +7,8 @@ import 'pdf_converter.dart';
 import 'data_converter.dart';
 import 'document_converter.dart';
 import 'video_converter.dart';
-import '../models/conversion_job.dart';
 import 'audio_converter.dart';
+import '../models/conversion_job.dart';
 
 class ConverterDispatcher {
   static Future<String> run(ConversionJob job) async {
@@ -18,11 +19,13 @@ class ConverterDispatcher {
 
     String outPath;
 
-    // Video — needs powerful or manual
-    if (['mp4', 'avi', 'mkv', 'mov', 'webm' ].contains(ext)) {
+    // ── Video ──────────────────────────────────────────────────────
+    if (['mp4', 'avi', 'mkv', 'mov', 'webm'].contains(ext)) {
       if (!EngineConfig.supportsVideo(engine)) {
         throw Exception(
-          'Video conversion requires Powerful or Manual engine.\nChange engine in Settings.'
+          Platform.isAndroid
+              ? 'Video conversion requires the Powerful engine.\nChange engine in Settings.'
+              : 'Video conversion requires Powerful or Manual engine.\nChange engine in Settings.',
         );
       }
       outPath = await VideoConverter.convert(
@@ -32,11 +35,29 @@ class ConverterDispatcher {
       );
     }
 
-    // DOCX → PDF — needs powerful or manual (LibreOffice)
-    else if (ext == 'docx' && target == 'PDF') {
-      if (!EngineConfig.supportsDocx(engine)) {
+    // ── Audio ──────────────────────────────────────────────────────
+    else if (['mp3', 'wav', 'ogg'].contains(ext)) {
+      if (!EngineConfig.supportsAudio(engine)) {
         throw Exception(
-          'DOCX → PDF requires Powerful or Manual engine.\nChange engine in Settings.'
+          Platform.isAndroid
+              ? 'Audio conversion requires the Powerful engine.\nChange engine in Settings.'
+              : 'Audio conversion requires Powerful or Manual engine.\nChange engine in Settings.',
+        );
+      }
+      outPath = await AudioConverter.convert(
+        sourcePath: job.sourcePath,
+        targetFormat: target,
+        outputDir: outputDir,
+      );
+    }
+
+    // ── DOCX → PDF ────────────────────────────────────────────────
+    else if (ext == 'docx' && target == 'PDF') {
+      if (!EngineConfig.supportsDesktopDocs(engine)) {
+        throw Exception(
+          Platform.isAndroid
+              ? 'DOCX → PDF is not supported on Android.\nUse the desktop app for this conversion.'
+              : 'DOCX → PDF requires Powerful or Manual engine.\nChange engine in Settings.',
         );
       }
       outPath = await DocumentConverter.docxToPdf(
@@ -45,8 +66,38 @@ class ConverterDispatcher {
       );
     }
 
-    // Images
-    else if (['jpg', 'jpeg', 'png', 'webp', 'bmp'].contains(ext)) {
+    // ── PPTX → PDF ────────────────────────────────────────────────
+    else if (ext == 'pptx' || ext == 'ppt') {
+      if (!EngineConfig.supportsDesktopDocs(engine)) {
+        throw Exception(
+          Platform.isAndroid
+              ? 'PPTX → PDF is not supported on Android.\nUse the desktop app for this conversion.'
+              : 'PPTX → PDF requires Powerful or Manual engine.\nChange engine in Settings.',
+        );
+      }
+      outPath = await DocumentConverter.pptxToPdf(
+        sourcePath: job.sourcePath,
+        outputDir: outputDir,
+      );
+    }
+
+    // ── EPUB → PDF ────────────────────────────────────────────────
+    else if (ext == 'epub') {
+      if (!EngineConfig.supportsDesktopDocs(engine)) {
+        throw Exception(
+          Platform.isAndroid
+              ? 'EPUB → PDF is not supported on Android.\nUse the desktop app for this conversion.'
+              : 'EPUB → PDF requires Powerful or Manual engine.\nChange engine in Settings.',
+        );
+      }
+      outPath = await DocumentConverter.epubToPdf(
+        sourcePath: job.sourcePath,
+        outputDir: outputDir,
+      );
+    }
+
+    // ── Images ────────────────────────────────────────────────────
+    else if (['jpg', 'jpeg', 'png', 'webp', 'bmp', 'heic'].contains(ext)) {
       if (target == 'PDF') {
         outPath = await PdfConverter.imageToPdf(
           imagePaths: [job.sourcePath],
@@ -62,7 +113,16 @@ class ConverterDispatcher {
       }
     }
 
-    // Data
+    // ── SVG ───────────────────────────────────────────────────────
+    else if (ext == 'svg') {
+      outPath = await ImageConverter.svgToImage(
+        sourcePath: job.sourcePath,
+        targetFormat: target,
+        outputDir: outputDir,
+      );
+    }
+
+    // ── Data ──────────────────────────────────────────────────────
     else if (ext == 'csv') {
       outPath = await DataConverter.csvToXlsx(
         sourcePath: job.sourcePath,
@@ -75,70 +135,47 @@ class ConverterDispatcher {
       );
     }
 
-    // TXT → PDF
+    // ── Documents (pure Dart) ─────────────────────────────────────
     else if (ext == 'txt') {
       outPath = await DocumentConverter.txtToPdf(
         sourcePath: job.sourcePath,
         outputDir: outputDir,
       );
-    }
-
-    // PDF → DOCX
-    else if (ext == 'pdf' && target == 'DOCX') {
+    } else if (ext == 'md' || ext == 'markdown') {
+      outPath = await DocumentConverter.mdToPdf(
+        sourcePath: job.sourcePath,
+        outputDir: outputDir,
+      );
+    } else if (ext == 'html' || ext == 'htm') {
+      // HTML → PDF: try LibreOffice on desktop, pure Dart fallback on Android
+      if (Platform.isAndroid) {
+        outPath = await DocumentConverter.htmlToPdfDart(
+          sourcePath: job.sourcePath,
+          outputDir: outputDir,
+        );
+      } else {
+        if (!EngineConfig.supportsDesktopDocs(engine)) {
+          outPath = await DocumentConverter.htmlToPdfDart(
+            sourcePath: job.sourcePath,
+            outputDir: outputDir,
+          );
+        } else {
+          outPath = await DocumentConverter.htmlToPdf(
+            sourcePath: job.sourcePath,
+            outputDir: outputDir,
+          );
+        }
+      }
+    } else if (ext == 'pdf' && target == 'DOCX') {
+      if (Platform.isAndroid) {
+        throw Exception('PDF → DOCX is not supported on Android.\nUse the desktop app for this conversion.');
+      }
       outPath = await DocumentConverter.pdfToDocx(
         sourcePath: job.sourcePath,
         outputDir: outputDir,
       );
     }
-      else if (ext == 'svg') {
-        outPath = await ImageConverter.svgToImage(
-        sourcePath: job.sourcePath,
-        targetFormat: target,
-        outputDir: outputDir,
-      );
-    }
-      else if (ext == 'epub') {
-        outPath = await DocumentConverter.epubToPdf(
-        sourcePath: job.sourcePath,
-        outputDir: outputDir,
-      );
-    }
-       else if (['mp3', 'wav', 'ogg'].contains(ext)) {
-        if (!EngineConfig.supportsVideo(engine)) {
-        throw Exception(
-        'Audio conversion requires Powerful or Manual engine.\nChange engine in Settings.'
-        );
-        }
-        outPath = await AudioConverter.convert(
-        sourcePath: job.sourcePath,
-        targetFormat: target,
-        outputDir: outputDir,
-        );
-    }
-        else if (ext == 'pptx' || ext == 'ppt') {
-          if (!EngineConfig.supportsDocx(engine)) {
-          throw Exception(
-          'PPTX → PDF requires Powerful or Manual engine.\nChange engine in Settings.'
-          );
-        }
-          outPath = await DocumentConverter.pptxToPdf(
-          sourcePath: job.sourcePath,
-          outputDir: outputDir,
-        );
-    }
-    else if (ext == 'html' || ext == 'htm') {
-        outPath = await DocumentConverter.htmlToPdf(
-        sourcePath: job.sourcePath,
-        outputDir: outputDir,
-        );
-    }
-    // Markdown → PDF
-    else if (ext == 'md' || ext == 'markdown') {
-        outPath = await DocumentConverter.mdToPdf(
-        sourcePath: job.sourcePath,
-        outputDir: outputDir,
-        );
-    }
+
     else {
       throw Exception('Unsupported conversion: $ext → $target');
     }

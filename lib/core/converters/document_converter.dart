@@ -368,4 +368,38 @@ static Future<String> htmlToPdf({
 
     return spans.isEmpty ? [pw.TextSpan(text: text, style: base)] : spans;
   }
+
+  /// Pure Dart HTML → PDF fallback (strips tags, renders as plain text PDF)
+  /// Used on Android where LibreOffice is unavailable.
+  static Future<String> htmlToPdfDart({
+    required String sourcePath,
+    required String outputDir,
+  }) async {
+    final html = await File(sourcePath).readAsString();
+    // Strip HTML tags for basic text extraction
+    final text = html
+        .replaceAll(RegExp(r'<style[^>]*>.*?</style>', dotAll: true), '')
+        .replaceAll(RegExp(r'<script[^>]*>.*?</script>', dotAll: true), '')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<p[^>]*>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<[^>]+>'), '')
+        .replaceAll(RegExp(r'&nbsp;'), ' ')
+        .replaceAll(RegExp(r'&amp;'), '&')
+        .replaceAll(RegExp(r'&lt;'), '<')
+        .replaceAll(RegExp(r'&gt;'), '>')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
+
+    // Reuse txtToPdf logic by writing to a temp file
+    final tempTxt = File('${sourcePath}_temp.txt');
+    await tempTxt.writeAsString(text);
+    final result = await txtToPdf(sourcePath: tempTxt.path, outputDir: outputDir);
+    await tempTxt.delete();
+
+    // Rename output to match original html filename
+    final baseName = p.basenameWithoutExtension(sourcePath);
+    final finalPath = p.join(outputDir, '$baseName.pdf');
+    await File(result).rename(finalPath);
+    return finalPath;
+  }
 }

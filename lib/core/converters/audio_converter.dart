@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:ffmpeg_kit_flutter_audio/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_audio/return_code.dart';
 
 class AudioConverter {
   static Future<String> convert({
@@ -9,17 +11,21 @@ class AudioConverter {
   }) async {
     final baseName = p.basenameWithoutExtension(sourcePath);
     final outPath = p.join(outputDir, '$baseName.${targetFormat.toLowerCase()}');
+    final args = _buildArgs(sourcePath: sourcePath, outPath: outPath, targetFormat: targetFormat.toUpperCase());
 
-    final args = _buildArgs(
-      sourcePath: sourcePath,
-      outPath: outPath,
-      targetFormat: targetFormat.toUpperCase(),
-    );
-
-    final result = await Process.run('ffmpeg', args);
-
-    if (result.exitCode != 0) {
-      throw Exception('ffmpeg audio error: ${result.stderr}');
+    if (Platform.isAndroid) {
+      final cmd = args.join(' ');
+      final session = await FFmpegKit.execute(cmd);
+      final rc = await session.getReturnCode();
+      if (!ReturnCode.isSuccess(rc)) {
+        final logs = await session.getLogsAsString();
+        throw Exception('ffmpeg audio error: $logs');
+      }
+    } else {
+      final result = await Process.run('ffmpeg', args);
+      if (result.exitCode != 0) {
+        throw Exception('ffmpeg audio error: ${result.stderr}');
+      }
     }
 
     return outPath;
@@ -31,7 +37,6 @@ class AudioConverter {
     required String targetFormat,
   }) {
     final base = ['-i', sourcePath, '-y'];
-
     switch (targetFormat) {
       case 'MP3':
         return [...base, '-codec:a', 'libmp3lame', '-q:a', '2', outPath];

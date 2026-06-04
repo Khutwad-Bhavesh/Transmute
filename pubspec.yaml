@@ -19,6 +19,7 @@ dependencies:
   printing: ^5.12.0
   excel: ^4.0.2
   syncfusion_flutter_pdf: ^27.1.48
+  ffmpeg_kit_flutter_audio: ^6.0.3   # ffmpeg compiled for Android (audio+video, no GPL)
 
 dev_dependencies:
   flutter_test:

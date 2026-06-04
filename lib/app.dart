@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +16,7 @@ class FileConverterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FileConverter',
+      title: 'Transmute',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       theme: _buildLight(),
@@ -77,14 +76,34 @@ class _MainShellState extends State<MainShell> {
 
   Widget _buildScreen() {
     return switch (_selected) {
-      SidebarItem.converter => const ConverterScreen(),
-      SidebarItem.batch => const ConverterScreen(),
-      SidebarItem.pdfMerge => const PdfToolsScreen(),
-      SidebarItem.pdfSplit => const PdfToolsScreen(),
-      SidebarItem.history => const HistoryScreen(),
-      SidebarItem.settings => const SettingsScreen(),
+      SidebarItem.converter   => const ConverterScreen(),
+      SidebarItem.batch       => const ConverterScreen(),
+      SidebarItem.pdfMerge    => const PdfToolsScreen(),
+      SidebarItem.pdfSplit    => const PdfToolsScreen(),
+      SidebarItem.history     => const HistoryScreen(),
+      SidebarItem.settings    => const SettingsScreen(),
       SidebarItem.compression => const CompressionScreen(),
     };
+  }
+
+  // Bottom nav items for mobile — condensed to 4 tabs
+  static const _bottomNavItems = [
+    BottomNavigationBarItem(icon: Icon(Icons.swap_horiz_rounded), label: 'Convert'),
+    BottomNavigationBarItem(icon: Icon(Icons.picture_as_pdf_outlined), label: 'PDF'),
+    BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'History'),
+    BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+  ];
+
+  static const _bottomNavMap = [
+    SidebarItem.converter,
+    SidebarItem.pdfMerge,
+    SidebarItem.history,
+    SidebarItem.settings,
+  ];
+
+  int get _bottomNavIndex {
+    final idx = _bottomNavMap.indexOf(_selected);
+    return idx < 0 ? 0 : idx;
   }
 
   @override
@@ -97,16 +116,43 @@ class _MainShellState extends State<MainShell> {
       );
     }
 
-    return Scaffold(
-      body: Row(
-        children: [
-          AppSidebar(
-            selected: _selected,
-            onSelect: (item) => setState(() => _selected = item),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+
+        if (isMobile) {
+          // Mobile: bottom navigation
+          return Scaffold(
+            body: _buildScreen(),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _bottomNavIndex,
+              onTap: (i) => setState(() => _selected = _bottomNavMap[i]),
+              selectedItemColor: AppColors.teal,
+              unselectedItemColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkBgSecondary
+                  : AppColors.lightBgSecondary,
+              type: BottomNavigationBarType.fixed,
+              items: _bottomNavItems,
+            ),
+          );
+        }
+
+        // Desktop/tablet: sidebar layout
+        return Scaffold(
+          body: Row(
+            children: [
+              AppSidebar(
+                selected: _selected,
+                onSelect: (item) => setState(() => _selected = item),
+              ),
+              Expanded(child: _buildScreen()),
+            ],
           ),
-          Expanded(child: _buildScreen()),
-        ],
-      ),
+        );
+      },
     );
   }
 }

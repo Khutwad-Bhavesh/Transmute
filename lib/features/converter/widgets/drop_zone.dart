@@ -21,6 +21,9 @@ class _DropZoneState extends State<DropZone> {
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary;
 
+    // On mobile (touch), no hover state, no drag hint text
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
@@ -47,9 +50,15 @@ class _DropZoneState extends State<DropZone> {
                 child: Icon(Icons.upload_outlined, size: 18, color: textTertiary),
               ),
               const SizedBox(height: 10),
-              Text('Drop files here', style: AppTypography.body.copyWith(color: textSecondary)),
-              const SizedBox(height: 4),
-              Text('or', style: AppTypography.caption.copyWith(color: textTertiary)),
+              // Desktop: "Drop files here", Mobile: "Tap to select files"
+              Text(
+                isMobile ? 'Tap to select files' : 'Drop files here',
+                style: AppTypography.body.copyWith(color: textSecondary),
+              ),
+              if (!isMobile) ...[
+                const SizedBox(height: 4),
+                Text('or', style: AppTypography.caption.copyWith(color: textTertiary)),
+              ],
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
